@@ -1,0 +1,7 @@
+# SQLite database + payment receipts. Single replica, so ReadWriteOnce local-path is enough.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata: {name: events-data, namespace: events, labels: {app: events}}
+spec:
+  accessModes: [ReadWriteOnce]
+  resources: {requests: {storage: 5Gi}}

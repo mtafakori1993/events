@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: events, namespace: events, labels: {app: events, component: web}}
+spec:
+  replicas: 1                      # SQLite: exactly one writer
+  strategy: {type: Recreate}       # never two pods on the same database
+  selector: {matchLabels: {app: events, component: web}}
+  template:
+    metadata: {labels: {app: events, component: web}}
+    spec:
+      automountServiceAccountToken: false
+      securityContext: {runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000, fsGroup: 1000, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: web
+          image: events-app
+          imagePullPolicy: IfNotPresent
+          ports: [{name: http, containerPort: 8080}]
+          envFrom:
+            - configMapRef: {name: events-config}
+            - secretRef: {name: events-secrets}     # SESSION_SECRET, ADMIN_PASSWORD_HASH (created by deploy/bootstrap.sh, never in git)
+          securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: {drop: [ALL]}}
+          resources: {requests: {cpu: 50m, memory: 96Mi}, limits: {cpu: "1", memory: 384Mi}}
+          volumeMounts: [{name: data, mountPath: /data}]
+          startupProbe: {httpGet: {path: /healthz, port: http}, periodSeconds: 2, failureThreshold: 30}
+          readinessProbe: {httpGet: {path: /healthz, port: http}, periodSeconds: 10}
+          livenessProbe: {httpGet: {path: /healthz, port: http}, periodSeconds: 20, failureThreshold: 3}
+      volumes:
+        - {name: data, persistentVolumeClaim: {claimName: events-data}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: events, namespace: events, labels: {app: events}}
+spec:
+  selector: {app: events, component: web}
+  ports: [{name: http, port: 80, targetPort: http}]

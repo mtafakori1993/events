@@ -1,0 +1,15 @@
+# Non-secret settings. The destination card is meant to be shown to payers, so it lives here (admin can also change it in the panel;
+# the admin-panel value, stored in the database, wins over these defaults).
+apiVersion: v1
+kind: ConfigMap
+metadata: {name: events-config, namespace: events, labels: {app: events}}
+data:
+  NODE_ENV: production
+  COOKIE_SECURE: "1"
+  TRUST_PROXY_HOPS: "1"            # Traefik is the single proxy in front of the app
+  FEE_TOMAN: "3900000"
+  REGISTERED_BASE: "17"
+  PAYMENT_CARD_NUMBER: "5859838820496978"
+  PAYMENT_CARD_HOLDER: "شرکت تفکر پردازان نوآوران فناوری"
+  MAX_RECEIPT_MB: "5"
+  ADMIN_USERNAME: admin

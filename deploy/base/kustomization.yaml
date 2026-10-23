@@ -1,0 +1,9 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: events
+resources: [namespace.yaml, config.yaml, storage.yaml, app.yaml, ingress.yaml, policy.yaml]
+# deploy.sh sets newTag to the git commit of the image it imported.
+images:
+  - name: events-app
+    newName: events-local/app
+    newTag: dev
